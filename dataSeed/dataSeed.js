@@ -155,6 +155,16 @@ var calcOccupancy = function(arr) {
   return counter / (arr.length - 5);
 };
 
+var formatTime = function(num) {
+  if (num < 60) {
+    return num.toString() + ' seconds'
+  } else {
+    var minutes = Math.floor(num / 60).toString();
+    var seconds = (num % 60).toFixed(2).toString();
+    return minutes + ' min ' + seconds + ' sec'
+  }
+}
+
 //REPEATS MY RANDOMIZATION FUNCTION FOR BOTH TESTING AND SEEDING
 
 var repeat = function(num, func, args) {
@@ -171,6 +181,8 @@ var repeat = function(num, func, args) {
 };
 
 //DATA SEEDING FUNCTIONALITY
+
+var then = new Date()
 
 var evenRows = repeat(2500, randomize, 90, 10, 30);
 var oddRows = repeat(2500, randomize, 90, 10, 30);
@@ -190,7 +202,10 @@ var seed = function(iterations) {
         seed(iterations);
       } else {
         counter = 0;
-        console.log('ALL DATA LOADED');
+        var now = new Date()
+        var seconds = (now - then) / 1000
+        var time = formatTime(seconds);
+        console.log('ALL DATA LOADED ................in ' + time);
       }
     })
     .catch(error => {
