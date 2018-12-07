@@ -55,9 +55,10 @@ class Booking extends React.Component {
 
 	componentDidMount() {
 
-		let queryString = window.location;
-		let listingId = (queryString.search.slice(-7) * 1)
-		console.log('client current id', listingId)
+    let queryString = window.location;
+    // console.log(queryString)
+		let listingId = (queryString.search.slice(4) * 1)
+		// console.log('client current id', listingId)
 		if(listingId){
 			axios.get(`/bookinglisting/id${listingId}`)
 			.then(({data}) => {
