@@ -1,61 +1,221 @@
-var mysql = require('promise-mysql');
+const { padZeroes, isValid, checkNextID } = require('./databaseHelpers');
+const rebuilders = require('./rebuilders')
+const queries = require('./redisQueries')
+const Redis = require('ioredis');
+const redis = new Redis();
+const moment = require('moment');
+const schedule = require('node-schedule');
 
-let stringParse = (data)=>{
-  return JSON.parse(JSON.stringify(data))
+const bits = 128;
+const key = 'apartments';
+
+const rebuild = schedule.scheduleJob('0 0 0 * * *', function() {
+  rebuilders.areWorking = true;
+  let total = checkNextID();
+  rebuildRedis(total);
+});
+
+var getData = id => {
+  var args = queries.get(id);
+  return redis
+    .bitfield(key, args)
+    .then(result => {
+      var dateString = '';
+      if (!rebuilders.areWorking){
+        dateString += padZeroes(result[5], 30);
+        dateString += padZeroes(result[6], 30);
+        dateString += padZeroes(result[7], 30);
+      } else {
+        dateString += padZeroes(result[5], 29);
+        dateString += padZeroes(result[6], 30);
+        dateString += padZeroes(result[7], 30);
+      }
+      var dates = [];
+      var today = moment(today);
+      for (let i = 0; i < dateString.length; ++i) {
+        if (dateString[i] === '1') {
+          var thisDate = today.clone().add(i, 'day').format('MM/DD/YYYY');
+          dates.push(thisDate);
+        }
+      }
+      var dataObj = {
+        price: result[0],
+        apartmentid: Number(id),
+        max: result[1] + 1,
+        minStay: result[2],
+        stars: result[3] / 10,
+        numRatings: result[4],
+        dates: dates
+      };
+      return dataObj;
+    })
+    .catch(err => {
+      return err;
+    });
 };
 
-var getData = (id)=>{
-	console.log('Database query', id)
+var updateListing = function(dataObj, id) {
+  return isValid()
+    .then(response => {
+      if (response !== true) {
+        for (let log of response) {
+          console.log(log);
+        }
+        throw new Error('Listing was not updated! See logs.');
+      } else {
+        let params = Object.keys(dataObj);
+        let args = [key];
+        for (let param of params) {
+          args = args.concat(set[param](dataObj[param], id));
+        }
+        return redis.bitfield(args).then((result, err) => {
+          if (err) {
+            throw new Error('Database failed to update.');
+          } else {
+            return `Database updated successfully, redis-cli responds with ${result}`;
+          }
+        });
+      }
+    })
+    .catch(err => {
+      return err;
+    });
+};
 
-	let aptData = {dates: [], price: 0, apartmentid: 0, minStay: 0, stars: 0, numRatings: 0, max:0};
-
-	return mysql.createConnection({
-
-		// host     : 'localhost',   Local config
-		// user     : 'root',
-		// password : '',
-		// database : 'booking'
-		host: 'booking.cksae9ebsoyz.us-east-2.rds.amazonaws.com',
-		user: 'root',
-		password: 'louisotter',
-		database : 'booking'
-
-
-	}).then((conn)=>{
-			
-		let aptDates = conn.query(`
-		SELECT date, price, apartmentid, minStay, stars, numRatings, max
-		FROM apartment t1
-		INNER JOIN dates t2 
-		ON t1.id = t2.apartment_id
-		WHERE t1.apartmentid=${id};
-		`);
-
-		conn.end();
-		return (aptDates);
-
-	}).then((raw)=>{
-
-		let data = stringParse(raw)
-		aptData.price = data[0].price;
-		aptData.apartmentid = data[0].apartmentid;
-		aptData.max = data[0].max;
-		aptData.minStay = data[0].minStay;
-		aptData.stars = data[0].stars;
-		aptData.numRatings = data[0].numRatings;
-
-		data.forEach(({date}) => {
-			aptData.dates.push(date)
-		});
-
-	}).then(()=>{
-		return aptData;
-	}).catch((err)=>{
-		console.log('query initialized err, works once componentsdidmount');		
-	})   
+var updateAvailability = function(obj, id) {
+  return isValid()
+    .then(response => {
+      if (response !== true) {
+        for (let log of response) {
+          console.log(log);
+        }
+        throw new Error('Listing was not updated! See logs.');
+      } else {
+        let offset = id * bits - bits;
+        let dates = Object.keys(dataObj);
+        let args = [];
+        let today = moment(0, 'HH');
+        for (let date of dates) {
+          let difference = today.diff(thisDate, 'days') * -1;
+          args = args.concat(['setbit', key, offset + difference, dataObj[date]]);
+        }
+        return redis.pipeline(args).exec().then((result, err) => {
+          if (err) {
+            throw new Error('Database failed to update.');
+          } else {
+            return 'Listing updated successfully.';
+          }
+        });
+      }
+    })
+    .catch(err => {
+      return err;
+    });
 }
 
-module.exports.getData = getData;
+var createListing = function(obj, id) {
+  return checkNextID()
+    .then(nextID => {
+      if (id !== nextID) {
+        throw new Error(`Invalid ID. Next available listing is ${nextID}`);
+      }
+      return isValid(obj);
+    })
+    .catch(err => {
+      return err;
+    })
+    .then(response => {
+      if (response !== true) {
+        for (let log of response) {
+          console.log(log);
+        }
+        throw new Error('Listing was not created! See logs.');
+      } else {
+        var price, max, minStay, stars, numRatings, dates;
+        price = set.price(obj.price, id);
+        max = set.max(obj.max, id);
+        minStay = set.minStay(obj.minStay, id);
+        stars = set.stars(obj.stars, id);
+        numRatings = set.numRatings(obj.numRatings, id);
+        dates = set.availability(obj.dates, id);
+        var args = [price, max, minStay, stars, numRatings, dates];
+        return redis.bitfield('arguments', args).then((result, err) => {
+          if (err) {
+            throw new Error('Error updating database!');
+          } else {
+            return 'Listing created successfully!';
+          }
+        });
+      }
+    })
+    .then(response => {
+      return response;
+    })
+    .catch(err => {
+      return err;
+    });
+};
+
+var set = {
+  price: function(num, id) {
+    var offset = (id * bits) - bits;
+    return ['set', 'u13', offset, num];
+  },
+  maxGuests: function(num, id) {
+    var offset = (id * bits) - bits + 13;
+    return ['set', 'u4', offset, num];
+  },
+  minStay: function(num, id) {
+    var offset = (id * bits) - bits + 17;
+    return ['set', 'u5', offset, num];
+  },
+  rating: function(num, id) {
+    var offset = (id * bits) - bits + 22;
+    return ['set', 'u6', offset, num];
+  },
+  numOfReviews: function(num, id) {
+    var offset = (id * bits) - bits + 38;
+    return ['set', 'u10', offset, num];
+  },
+  dates: function(num, id) {
+    var offset = 68;
+    var str = num.toString();
+    var last = str.slice(-30);
+    var middle = str.slice(-60, -30);
+    var first = str.slice(0, -60);
+    var args = [first, middle, last];
+    var result = [];
+    for (let i = 0; i < args.length; ++i) {
+      result.push('set');
+      result.push('u30');
+      result.push(offset);
+      result.push(parseInt(args[i], 10).toString(2));
+      offset += 30;
+    }
+    return result;
+  },
+  availability: function(position, numOfDays, bool, id) {
+    var num = 0;
+    if (bool === true) {
+      num = 1;
+    }
+    var result = [];
+    var offset = id * bits + 38 + position;
+    for (let i = 0; i < numOfDays; ++i) {
+      result.push('set');
+      result.push('u1');
+      result.push(offset);
+      result.push(num);
+      offset++;
+    }
+    return result;
+  }
+};
 
 
-
+exports.getData = getData;
+exports.updateListing = updateListing;
+exports.updateAvailability = updateAvailability;
+exports.createListing = createListing;
+exports.bits = bits;
+exports.key = key;
