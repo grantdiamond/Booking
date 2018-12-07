@@ -1,9 +1,6 @@
 const Redis = require('ioredis');
 const redis = new Redis();
-const params = require('./index');
-const { checkNextID } = require('./databaseHelpers');
-const { key, bits, chunkSize, chunkBegin } = require('./constants');
-const Promise = require('bluebird')
+const { key, bits, chunkSize } = require('./constants');
 
 var rebuilding = false;
 var rebuilt = 1;

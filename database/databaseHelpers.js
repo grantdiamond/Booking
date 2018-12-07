@@ -72,9 +72,9 @@ exports.checkNextID = function() {
 };
 
 exports.checkForConflict = function(id) {
-  if (rebuilders.rebuilt - id < chunkSize * 5 
-    && rebuilders.rebuilt - id > 0) {
-      return true;
-    }
+  if (rebuilders.rebuilt - id < chunkSize * 5 && rebuilders.rebuilt - id > 0) {
+    return true;
+  }
   return false;
-}
+  }
+};

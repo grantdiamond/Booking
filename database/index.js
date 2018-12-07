@@ -7,8 +7,7 @@ const schedule = require('node-schedule');
 const { padZeroes, isValid, checkNextID, checkForConflict } = require('./databaseHelpers');
 const rebuilders = require('./rebuilders')
 const queries = require('./redisQueries')
-const { bits, key, chunkSize } = require('../database/constants')
-// const Promise = require('bluebird')
+const { bits, key } = require('../database/constants')
 
 const automaticRebuild = schedule.scheduleJob('0 0 0 * * *', function() {
   rebuild();
@@ -28,7 +27,6 @@ var rebuild = function() {
     console.log(err, 'err')
     return err;
   })
-
 };
 
 var getData = id => {
@@ -99,7 +97,7 @@ var updateListing = function(dataObj, id) {
     });
 };
 
-var updateAvailability = function(obj, id) {
+var updateAvailability = function(dataObj, id) {
   return isValid()
     .then(response => {
       if (response !== true) {
@@ -228,7 +226,6 @@ var set = {
     return result;
   }
 };
-
 
 exports.getData = getData;
 exports.updateListing = updateListing;
