@@ -69,5 +69,3 @@ app.get('/*', (req, res) => {
 return app.listen(port, () => {
   console.log(`listening on port ${port}`);
 });
-
-// })
