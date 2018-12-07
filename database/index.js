@@ -1,35 +1,50 @@
-const { padZeroes, isValid, checkNextID } = require('./databaseHelpers');
-const rebuilders = require('./rebuilders')
-const queries = require('./redisQueries')
 const Redis = require('ioredis');
 const redis = new Redis();
+
 const moment = require('moment');
 const schedule = require('node-schedule');
 
-const bits = 128;
-const key = 'apartments';
+const { padZeroes, isValid, checkNextID, checkForConflict } = require('./databaseHelpers');
+const rebuilders = require('./rebuilders')
+const queries = require('./redisQueries')
+const { bits, key } = require('../database/constants')
 
-const rebuild = schedule.scheduleJob('0 0 0 * * *', function() {
-  rebuilders.areWorking = true;
-  let total = checkNextID();
-  rebuildRedis(total);
+const automaticRebuild = schedule.scheduleJob('0 0 0 * * *', function() {
+  rebuild();
 });
 
+var rebuild = function() {
+  rebuilders.areWorking = true;
+  return checkNextID()
+  .then(num => {
+    var total = num - 1;
+    return rebuilders.rebuildRedis(total);
+  })
+  .then(res => {
+    return res;
+  })
+  .catch(err => {
+    console.log(err, 'err')
+    return err;
+  })
+};
+
 var getData = id => {
+  if (rebuilders.areWorking) {
+    if (checkForConflict()) {
+      setTimeout(() => {
+        getData(id);
+      }, 200);
+    }
+  }
   var args = queries.get(id);
   return redis
     .bitfield(key, args)
     .then(result => {
       var dateString = '';
-      if (!rebuilders.areWorking){
         dateString += padZeroes(result[5], 30);
         dateString += padZeroes(result[6], 30);
         dateString += padZeroes(result[7], 30);
-      } else {
-        dateString += padZeroes(result[5], 29);
-        dateString += padZeroes(result[6], 30);
-        dateString += padZeroes(result[7], 30);
-      }
       var dates = [];
       var today = moment(today);
       for (let i = 0; i < dateString.length; ++i) {
@@ -82,7 +97,7 @@ var updateListing = function(dataObj, id) {
     });
 };
 
-var updateAvailability = function(obj, id) {
+var updateAvailability = function(dataObj, id) {
   return isValid()
     .then(response => {
       if (response !== true) {
@@ -212,10 +227,8 @@ var set = {
   }
 };
 
-
 exports.getData = getData;
 exports.updateListing = updateListing;
 exports.updateAvailability = updateAvailability;
 exports.createListing = createListing;
-exports.bits = bits;
-exports.key = key;
+exports.rebuild = rebuild;

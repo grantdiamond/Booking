@@ -1,3 +1,8 @@
+const Redis = require('ioredis');
+const redis = new Redis();
+const { bits, key, chunkSize } = require('./constants')
+const rebuilders = require('./rebuilders.js')
+
 exports.padZeroes = function(integer, finalLength) {
   let str = parseInt(integer, 10).toString(2);
   let result = '';
@@ -57,11 +62,19 @@ exports.isValid = function(obj) {
 };
 
 exports.checkNextID = function() {
-  return redis.strlen(params.key)
+  return redis.strlen(key)
     .then(result => {
       return (result * 8) / bits + 1;
     })
     .catch(err => {
       return err;
     });
+};
+
+exports.checkForConflict = function(id) {
+  if (rebuilders.rebuilt - id < chunkSize * 5 && rebuilders.rebuilt - id > 0) {
+    return true;
+  }
+  return false;
+  }
 };
