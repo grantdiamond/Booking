@@ -7,8 +7,8 @@
     "react-dev": "webpack -d --watch",
     "server-dev": "nodemon server/index.js",
     "start-prod": "cross-env NODE_ENV=development nodemon server/index.js",
-    "populate-db": "mysql -u root -h booking.cksae9ebsoyz.us-east-2.rds.amazonaws.com -p  < ./schema.sql",
-    "aws-connect": "ssh -i \"Louis-FEC-Booking.pem\" ubuntu@ec2-18-216-104-91.us-east-2.compute.amazonaws.com",
+    "populate-mySQL": "mysql -u root -h booking.cksae9ebsoyz.us-east-2.rds.amazonaws.com -p  < ./schema.sql",
+    "aws-connect": "ssh -i \"bookingModule.pem\" ubuntu@ec2-54-237-212-119.compute-1.amazonaws.com",
     "start-pm2": "pm2 start ./server/index.js",
     "list-pm2": "pm2 list",
     "pm2-server": "pm2 show server",
@@ -28,19 +28,16 @@
     "type": "git",
     "url": "git+https://github.com/Staybnb/Booking.git"
   },
-  "author": "louisotter",
+  "author": "Grant Diamond",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Staybnb/Booking/issues"
-  },
   "homepage": "https://github.com/Staybnb/Booking#readme",
   "dependencies": {
     "@newrelic/native-metrics": "^3.1.2",
     "axios": "^0.18.0",
     "bluebird": "^3.5.2",
     "body-parser": "^1.18.3",
-    "cors": "^2.8.4",
     "cross-env": "^5.2.0",
+    "dependency-check": "^3.2.1",
     "express": "^4.16.4",
     "ioredis": "^4.2.0",
     "knex": "^0.15.2",
@@ -48,6 +45,7 @@
     "morgan": "^1.9.0",
     "mysql": "^2.16.0",
     "newrelic": "^4.11.0",
+    "node-schedule": "^1.3.1",
     "nodemon": "^1.18.4",
     "pg": "^7.6.1",
     "pm2": "^3.2.2",
@@ -61,9 +59,7 @@
     "react-ratings-declarative": "^3.4.1",
     "redis": "^2.8.0",
     "redis-mass": "^0.4.0",
-    "redis-streams": "^1.1.0",
-    "restana": "^2.4.0",
-    "v8-profiler": "^5.7.0"
+    "redis-streams": "^1.1.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
