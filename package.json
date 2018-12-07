@@ -6,12 +6,23 @@
   "scripts": {
     "react-dev": "webpack -d --watch",
     "server-dev": "nodemon server/index.js",
+    "start-prod": "cross-env NODE_ENV=development nodemon server/index.js",
     "populate-db": "mysql -u root -h booking.cksae9ebsoyz.us-east-2.rds.amazonaws.com -p  < ./schema.sql",
     "aws-connect": "ssh -i \"Louis-FEC-Booking.pem\" ubuntu@ec2-18-216-104-91.us-east-2.compute.amazonaws.com",
     "start-pm2": "pm2 start ./server/index.js",
     "list-pm2": "pm2 list",
     "pm2-server": "pm2 show server",
-    "stop-pm2": "pm2 stop 0"
+    "stop-pm2": "pm2 stop 0",
+    "postgres": "pg_ctl -D /usr/local/var/postgres start",
+    "stop-postgres": "pg_ctl -D /usr/local/var/postgres stop",
+    "seed-postgres": "node ./dataSeed/dataSeedPostgres.js",
+    "redis": "redis-server",
+    "stop-redis": "redis-cli SHUTDOWN SAVE",
+    "abort-redis": "redis-cli SHUTDOWN NOSAVE",
+    "seed-redis": "node ./dataSeed/dataSeedRedis.js",
+    "mysql": "",
+    "stop-mysql": "",
+    "seed-mysql": ""
   },
   "repository": {
     "type": "git",
@@ -24,15 +35,21 @@
   },
   "homepage": "https://github.com/Staybnb/Booking#readme",
   "dependencies": {
+    "@newrelic/native-metrics": "^3.1.2",
     "axios": "^0.18.0",
     "bluebird": "^3.5.2",
     "body-parser": "^1.18.3",
     "cors": "^2.8.4",
+    "cross-env": "^5.2.0",
     "express": "^4.16.4",
+    "ioredis": "^4.2.0",
+    "knex": "^0.15.2",
     "moment": "^2.22.2",
     "morgan": "^1.9.0",
     "mysql": "^2.16.0",
+    "newrelic": "^4.11.0",
     "nodemon": "^1.18.4",
+    "pg": "^7.6.1",
     "pm2": "^3.2.2",
     "promise-mysql": "^3.3.1",
     "prop-types": "^15.6.2",
@@ -41,7 +58,12 @@
     "react-dates": "^18.1.1",
     "react-dom": "^16.5.2",
     "react-flexbox-grid": "^2.1.2",
-    "react-ratings-declarative": "^3.4.1"
+    "react-ratings-declarative": "^3.4.1",
+    "redis": "^2.8.0",
+    "redis-mass": "^0.4.0",
+    "redis-streams": "^1.1.0",
+    "restana": "^2.4.0",
+    "v8-profiler": "^5.7.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
@@ -52,6 +74,7 @@
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
     "css-loader": "^0.28.11",
+    "cz-conventional-changelog": "^2.1.0",
     "file-loader": "^2.0.0",
     "node-sass": "^4.8.3",
     "sass-loader": "^6.0.7",
@@ -59,5 +82,10 @@
     "url-loader": "^1.1.2",
     "webpack": "^4.22.0",
     "webpack-cli": "^3.1.2"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
