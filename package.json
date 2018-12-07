@@ -22,7 +22,8 @@
     "seed-redis": "node ./dataSeed/dataSeedRedis.js",
     "mysql": "",
     "stop-mysql": "",
-    "seed-mysql": ""
+    "seed-mysql": "",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
