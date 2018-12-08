@@ -76,5 +76,4 @@ exports.checkForConflict = function(id) {
     return true;
   }
   return false;
-  }
 };
