@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const database = require('../database/index.js');
 const path = require('path');
-const port = 4000;
+const port = process.env.PORT || 4000;
 
 var app = express();
 app.use(bodyParser.json());
@@ -64,6 +64,6 @@ app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname + '/../client/dist/index.html'));
 });
 
-app.listen(process.env.PORT || 4000, function() {
-  console.log(`listening on port ${process.env.PORT || 4000}`);
+app.listen(port, function() {
+  console.log(`listening on port ${port}`);
 });
