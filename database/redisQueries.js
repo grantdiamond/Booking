@@ -1,8 +1,8 @@
 const params = require('./index');
 const rebuilders = require('./rebuilders')
+const { bits, key } = require('../database/constants')
 
 exports.get = function(id) {
-  let bits = params.bits;
   var offset = (id * bits) - bits;
   var subOffsets = [13, 17, 22, 28, 38, 68, 98];
   if (!rebuilders.areWorking || 
