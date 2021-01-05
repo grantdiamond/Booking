@@ -34,7 +34,7 @@
   "homepage": "https://github.com/Staybnb/Booking#readme",
   "dependencies": {
     "@newrelic/native-metrics": "^3.1.2",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "bluebird": "^3.5.2",
     "body-parser": "^1.18.3",
     "cross-env": "^5.2.0",
